@@ -53,9 +53,11 @@ int main(int argc, char *argv[]) {
   sip_auth_info *sip_info, *head_sip_info;
   int num_items, count_cracking;
   // Format string used to handles command-line arguments
-  const char params_allowed[] = "hdvf:i:p:";
+  const char params_allowed[] = "hdvsf:i:p:";
   // FALSE = password not found; TRUE = password found
   short found;
+  // FALSE = try to crack all passwords, TRUE = stop on first password found
+  short stop_on_success;
   // TRUE = show only registered messages, FALSE otherwise
   short only_registered = TRUE;
   
@@ -74,7 +76,7 @@ int main(int argc, char *argv[]) {
     usage();
 
   // Set default settings
-  DEBUG = VERBOSE = FALSE;
+  DEBUG = VERBOSE = stop_on_success = FALSE;
   // Perform check of command-line argument to find special values (es., debug, verbose, help)
   while ((int_var = getopt (argc, argv, params_allowed)) != -1) {
     // Parse command-line's arguments
@@ -108,6 +110,11 @@ int main(int argc, char *argv[]) {
   while ((int_var = getopt (argc, argv, params_allowed)) != -1) {
     // Parse command-line's arguments
     switch (int_var) {
+    case 's':
+      if (DEBUG)
+        printf("Exit on first success enabled.\n");
+      stop_on_success = TRUE;
+      break;
     // Dictionary filename
     case 'f':
       if (dict_filename != NULL) break;
@@ -490,8 +497,17 @@ int main(int argc, char *argv[]) {
 	printf("\tRealm:\t\t%s\n", sip_info->server_realm);
 	printf("\tURI:\t\t%s\n", sip_info->client_uri);
 	printf("\tMD5 Response:\t%s\n", sip_info->client_md5_response);
+	// Add time and data information about found password
+	printf("\tFound at:\t");
+	print_actual_time();
 	// Password found!!! WE WON!
 	printf("\t - Clear-text password found: [   %s   ]\n\n", line);
+	if (stop_on_success == TRUE) {
+	  printf("[*] First password found, exit forced.\n");
+	  // Exit forced at next iteration
+	  while (sip_info->next != NULL)
+	    sip_info = sip_info->next;
+	}
 	break;
       }
     }
@@ -586,6 +602,7 @@ void usage() {
   );
   printf("      Note: at least one of above options will must be specified.\n\n");
   printf("  Optional options:\n");
+  printf("      -s\t\tExit after the first password has been found.\n");
   printf("      -v\t\tVerbose mode. Show password for each attempt. (Slow)\n");
   printf("      -d\t\tDebug mode. Print debug info. (Very slow, for developers)\n");
   printf("      -h\t\tShow this summary help.\n");
