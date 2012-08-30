@@ -98,18 +98,14 @@ char* reallocate_memory(char* ptr, int size) {
  */
 char* create_string(const char* str) {
   char *sp = NULL;
-  int str_len;
   // Check if 'str' argument is a valid string, otherwise exits.
   if (str == NULL || strlen(str) == 0) {
     printf("[!] Failed to allocate memory for NULL string.\n[!] Exit.\n");
     c_exit(MALLOC_MEMORY_ERROR);
   }
-  // Store string's lenght
-  str_len = strlen(str);
-  // Allocate memory
-  sp = allocate_memory(str_len);
-  // Secure copy of 'str' string in allocated memory-space
-  strncpy(sp, str, str_len);
+  // Duplicate string
+  sp = strdup(str);
+
   if (DEBUG)
     // Note: cast size_t into int
     printf("[D] Created string '%s', length: %d byte.\n", sp, (int)strlen(sp));
